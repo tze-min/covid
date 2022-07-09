@@ -55,14 +55,50 @@ FROM Coronavirus.dbo.Death
 WHERE continent IS NOT NULL
 GROUP BY continent
 ORDER BY highest_deaths DESC
+GO
 
---global numbers
+-- global death rate TABLEAU
 SELECT 
 	SUM(new_cases) AS total_cases
 	, SUM(new_deaths) AS total_deaths
 	, SUM(CAST(new_deaths AS FLOAT)) / SUM(CAST(new_cases AS FLOAT)) AS death_rate
 FROM Coronavirus.dbo.Death
 WHERE continent IS NOT NULL
+GO
+
+-- total death count by continent (as stated in location column) TABLEAU
+SELECT
+	location
+	, SUM(new_deaths) AS total_death_count
+FROM Coronavirus.dbo.Death
+WHERE 
+	continent IS NULL
+	AND location NOT LIKE '%income%'
+	AND location NOT IN ('World', 'European Union', 'International')
+GROUP BY location
+GO
+
+-- percentage of population infected per location; changing null values to 0 so that the variables are read as int, not str, in Tableau; TABLEAU
+SELECT
+	location
+	, ISNULL(population, 0) AS population
+	, MAX(ISNULL(total_cases, 0)) AS highest_infection_count
+	, MAX(ISNULL(CAST(total_cases AS FLOAT) * 100 / CAST(population AS FLOAT), 0)) AS percent_population_infected
+FROM Coronavirus.dbo.Death
+GROUP BY location, population
+ORDER BY percent_population_infected DESC
+GO
+
+-- percentage of population infected per location per date; changing null values to 0 so that the variables are read as int, not str, in Tableau; TABLEAU
+SELECT
+	location, date
+	, ISNULL(population, 0) AS population
+	, MAX(ISNULL(total_cases, 0)) AS highest_infection_count
+	, MAX(ISNULL(CAST(total_cases AS FLOAT) * 100 / CAST(population AS FLOAT), 0)) AS percent_population_infected
+FROM Coronavirus.dbo.Death
+GROUP BY location, population, date
+ORDER BY percent_population_infected DESC
+GO
 
 --joining deaths and vaccinations
 SELECT
